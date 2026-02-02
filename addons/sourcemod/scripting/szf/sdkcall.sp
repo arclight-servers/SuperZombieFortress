@@ -47,7 +47,7 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 	PrepSDKCall_SetFromConf(hSZF, SDKConf_Virtual, "CTFPlayer::GiveNamedItem");
 	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_VirtualAddress, SDKPass_ByValue);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
 	g_hSDKCallGiveNamedItem = EndPrepSDKCall();
@@ -59,7 +59,7 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_SetReturnInfo(SDKType_VirtualAddress, SDKPass_ByValue);
 	g_hSDKCallGetLoadoutItem = EndPrepSDKCall();
 	if (!g_hSDKCallGetLoadoutItem)
 		LogError("Failed to create call: CTFPlayer::GetLoadoutItem");
@@ -79,7 +79,7 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hSZF, SDKConf_Virtual, "CBaseEntity::GetVelocity");
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL, VENCODE_FLAG_COPYBACK);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_VirtualAddress, SDKPass_Pointer);
 	g_hSDKCallGetVelocity = EndPrepSDKCall();
 	if (!g_hSDKCallGetVelocity)
 		LogError("Failed to create call: CBaseEntity::GetVelocity");
