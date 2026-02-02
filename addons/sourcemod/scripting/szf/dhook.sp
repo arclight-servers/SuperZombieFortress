@@ -1,155 +1,27 @@
-enum struct Detour
-{
-	char sName[64];
-	DynamicDetour hDetour;
-	DHookCallback callbackPre;
-	DHookCallback callbackPost;
-}
-
-static ArrayList g_aDHookDetours;
-
-static DynamicHook g_hDHookGetCaptureValueForPlayer;
-static DynamicHook g_hDHookTeamMayCapturePoint;
-static DynamicHook g_hDHookSetWinningTeam;
-static DynamicHook g_hDHookRoundRespawn;
-static DynamicHook g_hDHookGiveNamedItem;
-static DynamicHook g_hDHookRefillThink;
-static DynamicHook g_hDHookDispenseAmmo;
-static DynamicHook g_hDHookGetHealRate;
-
-static TFTeam g_iOldClientTeam[MAXPLAYERS+1];
-static float g_flLastDispenserUsed[MAXPLAYERS + 1];
-
-static int g_iHookIdGiveNamedItem[MAXPLAYERS+1];
-
-void DHook_Init(GameData hSZF)
-{
-	g_aDHookDetours = new ArrayList(sizeof(Detour));
-	
-	DHook_CreateDetour(hSZF, "CTFPlayer::TeamFortress_CalculateMaxSpeed", _, DHook_CalculateMaxSpeedPost);
-	DHook_CreateDetour(hSZF, "CTFWeaponBaseMelee::DoSwingTraceInternal", DHook_DoSwingTraceInternalPre, DHook_DoSwingTraceInternalPost);
-	
-	g_hDHookGetCaptureValueForPlayer = DHook_CreateVirtual(hSZF, "CTeamplayRules::GetCaptureValueForPlayer");
-	g_hDHookTeamMayCapturePoint = DHook_CreateVirtual(hSZF, "CTeamplayRules::TeamMayCapturePoint");
-	g_hDHookSetWinningTeam = DHook_CreateVirtual(hSZF, "CTeamplayRules::SetWinningTeam");
-	g_hDHookRoundRespawn = DHook_CreateVirtual(hSZF, "CTeamplayRoundBasedRules::RoundRespawn");
-	g_hDHookGiveNamedItem = DHook_CreateVirtual(hSZF, "CTFPlayer::GiveNamedItem");
-	g_hDHookRefillThink = DHook_CreateVirtual(hSZF, "CObjectDispenser::RefillThink");
-	g_hDHookDispenseAmmo = DHook_CreateVirtual(hSZF, "CObjectDispenser::DispenseAmmo");
-	g_hDHookGetHealRate = DHook_CreateVirtual(hSZF, "CObjectDispenser::GetHealRate");
-}
-
-static void DHook_CreateDetour(GameData hGameData, const char[] sName, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
-{
-	Detour detour;
-	detour.hDetour = DynamicDetour.FromConf(hGameData, sName);
-	if (!detour.hDetour)
-	{
-		LogError("Failed to create detour: %s", sName);
-	}
-	else
-	{
-		strcopy(detour.sName, sizeof(detour.sName), sName);
-		detour.callbackPre = callbackPre;
-		detour.callbackPost = callbackPost;
-		g_aDHookDetours.PushArray(detour);
-	}
-}
-
-static DynamicHook DHook_CreateVirtual(GameData hGameData, const char[] sName)
-{
-	DynamicHook hHook = DynamicHook.FromConf(hGameData, sName);
-	if (!hHook)
-		LogError("Failed to create hook: %s", sName);
-	
-	return hHook;
-}
-
-void DHook_HookGiveNamedItem(int iClient)
-{
-	if (!g_bTF2Items)
-		g_iHookIdGiveNamedItem[iClient] = g_hDHookGiveNamedItem.HookEntity(Hook_Pre, iClient, DHook_OnGiveNamedItemPre, DHook_OnGiveNamedItemRemoved);
-}
-
-void DHook_UnhookGiveNamedItem(int iClient)
-{
-	if (g_iHookIdGiveNamedItem[iClient])
-	{
-		DHookRemoveHookID(g_iHookIdGiveNamedItem[iClient]);
-		g_iHookIdGiveNamedItem[iClient] = INVALID_HOOK_ID;	
-	}
-}
-
-bool DHook_IsGiveNamedItemActive()
-{
-	for (int iClient = 1; iClient <= MaxClients; iClient++)
-		if (g_iHookIdGiveNamedItem[iClient])
-			return true;
-	
-	return false;
-}
-
-void DHook_OnEntityCreated(int iEntity, const char[] sClassname)
-{
-	if (StrEqual(sClassname, "obj_dispenser"))
-	{
-		g_hDHookRefillThink.HookEntity(Hook_Pre, iEntity, DHook_RefillThinkPre);
-		g_hDHookDispenseAmmo.HookEntity(Hook_Pre, iEntity, DHook_DispenseAmmoPre);
-		g_hDHookDispenseAmmo.HookEntity(Hook_Post, iEntity, DHook_DispenseAmmoPost);
-		g_hDHookGetHealRate.HookEntity(Hook_Post, iEntity, DHook_GetHealRatePost);
-	}
-}
-
-void DHook_Enable()
-{
-	int iLength = g_aDHookDetours.Length;
-	for (int i = 0; i < iLength; i++)
-	{
-		Detour detour;
-		g_aDHookDetours.GetArray(i, detour);
-		
-		if (detour.callbackPre != INVALID_FUNCTION)
-			if (!detour.hDetour.Enable(Hook_Pre, detour.callbackPre))
-				LogError("Failed to enable pre detour: %s", detour.sName);
-		
-		if (detour.callbackPost != INVALID_FUNCTION)
-			if (!detour.hDetour.Enable(Hook_Post, detour.callbackPost))
-				LogError("Failed to enable post detour: %s", detour.sName);
-	}
-	
-	g_hDHookGetCaptureValueForPlayer.HookGamerules(Hook_Post, DHook_GetCaptureValueForPlayerPost);
-	g_hDHookTeamMayCapturePoint.HookGamerules(Hook_Post, DHook_TeamMayCapturePointPost);
-	g_hDHookSetWinningTeam.HookGamerules(Hook_Pre, DHook_SetWinningTeamPre);
-	g_hDHookRoundRespawn.HookGamerules(Hook_Pre, DHook_RoundRespawnPre);
-}
-
-void DHook_Disable()
-{
-	int iLength = g_aDHookDetours.Length;
-	for (int i = 0; i < iLength; i++)
-	{
-		Detour detour;
-		g_aDHookDetours.GetArray(i, detour);
-		
-		if (detour.callbackPre != INVALID_FUNCTION)
-			if (!detour.hDetour.Disable(Hook_Pre, detour.callbackPre))
-				LogError("Failed to disable pre detour: %s", detour.sName);
-		
-		if (detour.callbackPost != INVALID_FUNCTION)
-			if (!detour.hDetour.Disable(Hook_Post, detour.callbackPost))
-				LogError("Failed to disable post detour: %s", detour.sName);
-	}
-}
-
-public MRESReturn DHook_CalculateMaxSpeedPost(int iClient, DHookReturn hReturn)
+void CalculateMaxSpeedPost(int iClient)
 {
 	if (IsClientInGame(iClient) && IsPlayerAlive(iClient))
 	{
-		float flSpeed = hReturn.Value;
-		if (flSpeed <= 1.0)
-			return MRES_Ignored;
+		float flDefault = 300.0;
+		switch (TF2_GetPlayerClass(iClient))
+		{
+			case TFClass_Scout:
+				flDefault = 400.0;
+			
+			case TFClass_Soldier:
+				flDefault = 240.0;
+			
+			case TFClass_DemoMan:
+				flDefault = 280.0;
+			
+			case TFClass_Heavy:
+				flDefault = 230.0;
+			
+			case TFClass_Medic, TFClass_Spy:
+				flDefault = 320.0;
+		}
 		
-		flSpeed += g_ClientClasses[iClient].flSpeed;
+		float flSpeed = flDefault + g_ClientClasses[iClient].flSpeed;
 		
 		if (IsZombie(iClient))
 		{
@@ -228,209 +100,67 @@ public MRESReturn DHook_CalculateMaxSpeedPost(int iClient, DHookReturn hReturn)
 		if (flSpeed <= 1.0)	// Do not set speed to negative or you'll send em to the backrooms
 			flSpeed = 1.0;
 		
-		hReturn.Value = flSpeed;
-		return MRES_Override;
+		TF2Attrib_SetByName(iClient, "major move speed bonus", flSpeed / flDefault);
 	}
-	
-	return MRES_Ignored;
 }
 
-public MRESReturn DHook_DoSwingTraceInternalPre(int iMelee, DHookReturn hReturn, DHookParam hParams)
+void DHook_OnEntityCreated(int iEntity, const char[] sClassname)
 {
-	if (!g_cvMeleeIgnoreTeammates.BoolValue)
-		return MRES_Ignored;
-	
-	// Ignore weapons with "speed buff ally" attribute
-	float flSpeedBuffAlly = 0.0;
-	if (TF2_WeaponFindAttribute(iMelee, 251, flSpeedBuffAlly) && flSpeedBuffAlly)
-		return MRES_Ignored;
-	
-	// Enable MvM for this function for melee trace hack
-	GameRules_SetProp("m_bPlayingMannVsMachine", true);
-	
-	int iOwner = GetEntPropEnt(iMelee, Prop_Send, "m_hOwnerEntity");
-	TFTeam iOwnerTeam = TF2_GetClientTeam(iOwner);
-	
-	for (int iClient = 1; iClient <= MaxClients; iClient++)
-	{
-		if (!IsClientInGame(iClient))
-			continue;
-		
-		// Save current team for later
-		TFTeam iTeam = TF2_GetClientTeam(iClient);
-		g_iOldClientTeam[iClient] = iTeam;
-		
-		// Melee trace ignores teammates for MvM invaders
-		// Move teammates to the BLU team and enemies to the RED team
-		SetEntProp(iClient, Prop_Data, "m_iTeamNum", iTeam == iOwnerTeam ? TFTeam_Blue : TFTeam_Red);
-	}
-	
-	return MRES_Ignored;
+	if (!g_bTF2Items && !g_bGiveNamedItemSkip && StrContains(sClassname, "tf_wea") == 0)
+		RequestFrame(OnGiveNamedItemPre, EntIndexToEntRef(iEntity));
 }
 
-public MRESReturn DHook_DoSwingTraceInternalPost(int iMelee, DHookReturn hReturn, DHookParam hParams)
+static void OnGiveNamedItemPre(int iRef)
 {
-	if (!g_cvMeleeIgnoreTeammates.BoolValue)
-		return MRES_Ignored;
+	int iEntity = EntRefToEntIndex(iRef);
+	if (iEntity == INVALID_ENT_REFERENCE)
+		return;
 	
-	// Ignore weapons with "speed buff ally" attribute
-	float flSpeedBuffAlly = 0.0;
-	if (TF2_WeaponFindAttribute(iMelee, 251, flSpeedBuffAlly) && flSpeedBuffAlly)
-		return MRES_Ignored;
+	if ((HasEntProp(iEntity, Prop_Send, "m_bDisguiseWearable") && GetEntProp(iEntity, Prop_Send, "m_bDisguiseWearable")) ||
+		(HasEntProp(iEntity, Prop_Send, "m_bDisguiseWeapon") && GetEntProp(iEntity, Prop_Send, "m_bDisguiseWeapon")))
+		return;
 	
-	// Disable MvM so there are no lingering effects
-	GameRules_SetProp("m_bPlayingMannVsMachine", false);
+	int iClient = GetEntPropEnt(iEntity, Prop_Send, "m_hOwnerEntity");
+	if (iClient < 1 || iClient > MaxClients)
+		return;
 	
-	for (int iClient = 1; iClient <= MaxClients; iClient++)
-	{
-		if (!IsClientInGame(iClient))
-			continue;
-		
-		// Restore client's previous team
-		SetEntProp(iClient, Prop_Data, "m_iTeamNum", g_iOldClientTeam[iClient]);
-	}
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_OnGiveNamedItemPre(int iClient, DHookReturn hReturn, DHookParam hParams)
-{
-	// Block if one of the pointers is null
-	if (hParams.IsNull(1) || hParams.IsNull(3))
-	{
-		hReturn.Value = 0;
-		return MRES_Supercede;
-	}
-	
-	int iIndex = hParams.GetObjectVar(3, g_iOffsetItemDefinitionIndex, ObjectValueType_Int) & 0xFFFF;
+	int iIndex = GetEntProp(iEntity, Prop_Send, "m_iItemDefinitionIndex");
 	
 	Action iAction = OnGiveNamedItem(iClient, iIndex);
 	
 	if (iAction == Plugin_Handled)
 	{
-		hReturn.Value = 0;
-		return MRES_Supercede;
-	}
-	
-	return MRES_Ignored;
-}
-
-public void DHook_OnGiveNamedItemRemoved(int iHookId)
-{
-	for (int iClient = 1; iClient <= MaxClients; iClient++)
-	{
-		if (g_iHookIdGiveNamedItem[iClient] == iHookId)
+		char sClassname[36];
+		GetEntityClassname(iEntity, sClassname, sizeof(sClassname));
+		if (StrContains(sClassname, "tf_weapon") == 0)
 		{
-			g_iHookIdGiveNamedItem[iClient] = 0;
-			return;
+			RemoveItem(iClient, iEntity);
+		}
+		else
+		{
+			TF2_RemoveWearable(iClient, iEntity);
 		}
 	}
 }
 
-public MRESReturn DHook_RefillThinkPre(int iDispenser, DHookReturn hReturn, DHookParam hParams)
+static void RemoveItem(int iClient, int iWeapon)
 {
-	if (view_as<TFTeam>(GetEntProp(iDispenser, Prop_Send, "m_iTeamNum")) == TFTeam_Survivor)
-		return MRES_Supercede;
-	
-	return MRES_Ignored;
+	int iEntity = GetEntPropEnt(iWeapon, Prop_Send, "m_hExtraWearable");
+	if (iEntity != -1)
+		TF2_RemoveWearable(iClient, iEntity);
+
+	iEntity = GetEntPropEnt(iWeapon, Prop_Send, "m_hExtraWearableViewModel");
+	if (iEntity != -1)
+		TF2_RemoveWearable(iClient, iEntity);
+
+	RemovePlayerItem(iClient, iWeapon);
+	RemoveEntity(iWeapon);
 }
 
-public MRESReturn DHook_DispenseAmmoPre(int iDispenser, DHookReturn hReturn, DHookParam hParams)
-{
-	int iClient = hParams.Get(1);
-	if (!IsValidLivingSurvivor(iClient))
-		return MRES_Ignored;
-	
-	if (g_flLastDispenserUsed[iClient] + g_cvDispenserAmmoCooldown.FloatValue <= GetGameTime())
-	{
-		SetEntProp(iDispenser, Prop_Send, "m_iAmmoMetal", 0);	// prevent giving engis metal, reverted back in post
-		g_flLastDispenserUsed[iClient] = GetGameTime();
-		return MRES_Ignored;
-	}
-	else
-	{
-		hReturn.Value = false;
-		return MRES_Supercede;
-	}
-}
-
-public MRESReturn DHook_DispenseAmmoPost(int iDispenser, DHookReturn hReturn, DHookParam hParams)
-{
-	int iClient = GetEntPropEnt(iDispenser, Prop_Send, "m_hBuilder");
-	if (!IsValidLivingSurvivor(iClient))
-		return MRES_Ignored;
-	
-	if (hReturn.Value)
-		g_flDispenserUsage[iClient] -= 1.0 / g_cvDispenserAmmoMax.FloatValue;
-	
-	if (g_flDispenserUsage[iClient] > 0.0)
-	{
-		SetEntProp(iDispenser, Prop_Send, "m_iAmmoMetal", RoundToCeil(g_flDispenserUsage[iClient] * MINI_DISPENSER_MAX_METAL));
-	}
-	else
-	{
-		SetVariantInt(GetEntProp(iDispenser, Prop_Send, "m_iMaxHealth"));
-		AcceptEntityInput(iDispenser, "RemoveHealth");
-	}
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_GetHealRatePost(int iDispenser, DHookReturn hReturn, DHookParam hParams)
-{
-	if (view_as<TFTeam>(GetEntProp(iDispenser, Prop_Send, "m_iTeamNum")) == TFTeam_Survivor)
-	{
-		float flValue = hReturn.Value;
-		flValue *= g_cvDispenserHealRate.FloatValue;
-		hReturn.Value = flValue;
-		return MRES_Supercede;
-	}
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_GetCaptureValueForPlayerPost(DHookReturn hReturn, DHookParam hParams)
-{
-	int iClient = hParams.Get(1);
-	
-	if (TF2_GetPlayerClass(iClient) == TFClass_Scout) //Reduce capture rate for scout
-	{
-		hReturn.Value--;
-		return MRES_Supercede;
-	}
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_TeamMayCapturePointPost(DHookReturn hReturn, DHookParam hParams)
-{
-	TFTeam nTeam = hParams.Get(1);
-	if (nTeam != TFTeam_Zombie)
-		return MRES_Ignored;
-	
-	for (int iClient = 1; iClient <= MaxClients; iClient++)
-	{
-		if (IsClientInGame(iClient) && g_nInfected[iClient] == Infected_Tank)
-		{
-			// Allow tank to "capture" CP, but really just blocking cap progress
-			hReturn.Value = true;
-			return MRES_Supercede;
-		}
-	}
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_SetWinningTeamPre(DHookParam hParams)
-{
-	hParams.Set(4, false);	// always return false to bSwitchTeams
-	return MRES_ChangedOverride;
-}
-
-public MRESReturn DHook_RoundRespawnPre()
+void RoundRespawnPre()
 {
 	if (g_nRoundState == SZFRoundState_Setup)
-		return MRES_Ignored;
+		return;
 	
 	DetermineControlPoints();
 	
@@ -521,7 +251,7 @@ public MRESReturn DHook_RoundRespawnPre()
 				}
 				
 				//Zombie
-				SpawnClient(iClient, TFTeam_Zombie, false);
+				SpawnClient(iClient, TFTeam_Zombie, true);
 				nClientTeam[iClient] = TFTeam_Zombie;
 				g_flTimeStartAsZombie[iClient] = GetGameTime();
 				SetClientStartedAsZombie(iClient);
@@ -540,14 +270,14 @@ public MRESReturn DHook_RoundRespawnPre()
 			if (iSurvivorCount > 0)
 			{
 				//Survivor
-				SpawnClient(iClient, TFTeam_Survivor, false);
+				SpawnClient(iClient, TFTeam_Survivor, true);
 				nClientTeam[iClient] = TFTeam_Survivor;
 				iSurvivorCount--;
 			}
 			else
 			{
 				//Zombie
-				SpawnClient(iClient, TFTeam_Zombie, false);
+				SpawnClient(iClient, TFTeam_Zombie, true);
 				nClientTeam[iClient] = TFTeam_Zombie;
 				g_flTimeStartAsZombie[iClient] = GetGameTime();
 				SetClientStartedAsZombie(iClient);
@@ -571,6 +301,4 @@ public MRESReturn DHook_RoundRespawnPre()
 	
 	SetGlow();
 	UpdateZombieDamageScale();
-	
-	return MRES_Ignored;
 }

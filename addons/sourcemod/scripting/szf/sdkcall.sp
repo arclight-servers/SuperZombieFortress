@@ -127,6 +127,7 @@ Address SDKCall_GetLoadoutItem(int iClient, TFClassType iClass, int iSlot)
 
 void SDKCall_SetSpeed(int iClient)
 {
+	CalculateMaxSpeedPost(iClient);
 	SDKCall(g_hSDKCallSetSpeed, iClient);
 }
 

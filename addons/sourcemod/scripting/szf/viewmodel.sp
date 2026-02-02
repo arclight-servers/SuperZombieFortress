@@ -97,6 +97,7 @@ void ViewModel_UpdateClient(int iClient)
 
 int ViewModels_CreateWearable(int iClient, int iModelIndex, int iWeapon)
 {
+	g_bGiveNamedItemSkip = true;
 	int iWearable = CreateEntityByName("tf_wearable_vm");
 	
 	float vecOrigin[3], vecAngles[3];
@@ -118,6 +119,7 @@ int ViewModels_CreateWearable(int iClient, int iModelIndex, int iWeapon)
 	
 	SetVariantString("!activator");
 	AcceptEntityInput(iWearable, "SetParent", GetEntPropEnt(iClient, Prop_Send, "m_hViewModel"));
+	g_bGiveNamedItemSkip = false;
 	
 	return EntIndexToEntRef(iWearable);
 }

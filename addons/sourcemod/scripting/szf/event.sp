@@ -1,5 +1,6 @@
 void Event_Init()
 {
+	HookEvent("teamplay_round_start", Event_RoundSetup, EventHookMode_PostNoCopy);
 	HookEvent("teamplay_setup_finished", Event_SetupEnd);
 	HookEvent("teamplay_round_win", Event_RoundEnd);
 	HookEvent("post_inventory_application", Event_PlayerInventoryUpdate);
@@ -15,6 +16,11 @@ void Event_Init()
 	HookEvent("fish_notice", Event_HideNotice, EventHookMode_Pre);
 	HookEvent("fish_notice__arm", Event_HideNotice, EventHookMode_Pre);
 	HookEventEx("slap_notice", Event_HideNotice, EventHookMode_Pre);
+}
+
+static void Event_RoundSetup(Event event, const char[] name, bool dontBroadcast)
+{
+	RoundRespawnPre();
 }
 
 public Action Event_SetupEnd(Event event, const char[] name, bool dontBroadcast)
@@ -419,22 +425,12 @@ public Action Event_PlayerBuiltObject(Event event, const char[] name, bool dontB
 	   
 	if (nObjectType == TFObject_Dispenser && IsSurvivor(iClient))
 	{
-		SetEntProp(iEntity, Prop_Send, "m_bMiniBuilding", true);	// This also prevents starting 25 metal being set
-		
 		if (!GetEntProp(iEntity, Prop_Send, "m_bCarryDeploy"))
 		{
-			g_flDispenserUsage[iClient] = 1.0;
-			SetEntProp(iEntity, Prop_Send, "m_iAmmoMetal", MINI_DISPENSER_MAX_METAL);
-			
-			// Starting half of max health due to side effect of mini building
-			int iOffset = FindSendPropInfo("CObjectDispenser", "m_flPercentageConstructed") + 4;	// m_flHealth
-			
-			const iMaxHealth = 100;	// TF2 game forces it to be 100 due to mini building
-			
-			SetEntProp(iEntity, Prop_Send, "m_iMaxHealth", iMaxHealth);
-			SetEntDataFloat(iEntity, iOffset, float(iMaxHealth) * 0.5);
-			SetEntProp(iEntity, Prop_Send, "m_iHealth", RoundToFloor(float(iMaxHealth) * 0.5));
+			int iMaxHealth = GetEntProp(iEntity, Prop_Send, "m_iMaxHealth");
+			SetEntProp(iEntity, Prop_Send, "m_iMaxHealth", iMaxHealth * 4);	// Barricade
 		}
+		SetEntProp(iEntity, Prop_Send, "m_bCarried", 1);	// Disable healing/ammo and upgrading
 	}
 	
 	return Plugin_Continue;

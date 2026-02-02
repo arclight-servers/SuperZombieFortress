@@ -767,6 +767,7 @@ stock int TF2_CreateWeapon(int iClient, int iIndex, ConfigAttributes attribs = g
 	
 	if (iWeapon == -1)
 	{
+		g_bGiveNamedItemSkip = true;
 		iWeapon = CreateEntityByName(sClassname);
 		if (IsValidEntity(iWeapon))
 		{
@@ -781,6 +782,7 @@ stock int TF2_CreateWeapon(int iClient, int iIndex, ConfigAttributes attribs = g
 				SetEntProp(iWeapon, Prop_Data, "m_iSubType", iSubType);
 			}
 		}
+		g_bGiveNamedItemSkip = false;
 	}
 	
 	if (IsValidEntity(iWeapon))

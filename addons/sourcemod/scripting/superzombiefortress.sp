@@ -9,7 +9,6 @@
 #include <tf2_stocks>
 #include <tf2attributes>
 #include <tf_econ_data>
-#include <dhooks>
 #include <morecolors>
 
 #undef REQUIRE_EXTENSIONS
@@ -431,12 +430,8 @@ ConVar g_cvFrenzyRespawnStress;
 ConVar g_cvStunImmunity;
 ConVar g_cvLastStandKingRuneDuration;
 ConVar g_cvLastStandDefenseDuration;
-ConVar g_cvDispenserAmmoCooldown;
-ConVar g_cvDispenserAmmoMax;
-ConVar g_cvDispenserHealRate;
 ConVar g_cvDispenserHealMax;
 ConVar g_cvBannerRequirement;
-ConVar g_cvMeleeIgnoreTeammates;
 ConVar g_cvPunishAvoidingPlayers;
 
 ConVar g_cvFriendlyFire;
@@ -670,7 +665,6 @@ public void OnPluginStart()
 	if (!hSZF)
 		SetFailState("Could not find szf gamedata!");
 	
-	DHook_Init(hSZF);
 	SDKCall_Init(hSDKHooks, hTF2, hSZF);
 	
 	g_iOffsetItemDefinitionIndex = hSZF.GetOffset("CEconItemView::m_iItemDefinitionIndex");
@@ -697,10 +691,6 @@ public void OnLibraryAdded(const char[] sName)
 	if (StrEqual(sName, "TF2Items"))
 	{
 		g_bTF2Items = true;
-		
-		//We cant allow TF2Items load while GiveNamedItem already hooked due to crash
-		if (DHook_IsGiveNamedItemActive())
-			SetFailState("Do not load TF2Items midgame while Super Zombie Fortress is already loaded!");
 	}
 }
 
@@ -709,12 +699,6 @@ public void OnLibraryRemoved(const char[] sName)
 	if (StrEqual(sName, "TF2Items"))
 	{
 		g_bTF2Items = false;
-		
-		//TF2Items unloaded with GiveNamedItem unhooked, we can now safely hook GiveNamedItem ourself
-		if (g_bEnabled)
-			for (int iClient = 1; iClient <= MaxClients; iClient++)
-				if (IsClientInGame(iClient))
-					DHook_HookGiveNamedItem(iClient);
 	}
 }
 
@@ -826,14 +810,11 @@ public void OnClientPutInServer(int iClient)
 	
 	CreateTimer(10.0, Timer_InitialHelp, iClient, TIMER_FLAG_NO_MAPCHANGE);
 	
-	DHook_HookGiveNamedItem(iClient);
 	SDKHook_HookClient(iClient);
 }
 
 public void OnClientDisconnect(int iClient)
 {
-	DHook_UnhookGiveNamedItem(iClient);
-	
 	if (!g_bEnabled)
 		return;
 	
@@ -1401,13 +1382,11 @@ void SZFEnable()
 		
 		if (IsClientInGame(iClient))
 		{
-			DHook_HookGiveNamedItem(iClient);
 			SDKHook_HookClient(iClient);
 		}
 	}
 	
 	ConVar_Enable();
-	DHook_Enable();
 	
 	Config_Refresh();
 	Classes_Refresh();
@@ -1481,14 +1460,12 @@ void SZFDisable()
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
 		ResetClientState(iClient);
-		DHook_UnhookGiveNamedItem(iClient);
 		
 		if (IsClientInGame(iClient))
 			SDKHook_UnhookClient(iClient);
 	}
 	
 	ConVar_Disable();
-	DHook_Disable();
 	
 	RemoveNormalSoundHook(SoundHook);
 	
