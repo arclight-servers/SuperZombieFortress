@@ -760,7 +760,7 @@ stock int TF2_CreateWeapon(int iClient, int iIndex, ConfigAttributes attribs = g
 	{
 		int iSlot = TF2Econ_GetItemLoadoutSlot(iIndex, iClass);	//Uses econ slot
 		Address pItem = SDKCall_GetLoadoutItem(iClient, iClass, iSlot);
-		
+		PrintToServer("(LoadFromAddress(%x + %x)", pItem, g_iOffsetItemDefinitionIndex);
 		if (pItem && Config_GetOriginalItemDefIndex(LoadFromAddress(pItem+view_as<Address>(g_iOffsetItemDefinitionIndex), NumberType_Int16)) == iIndex)
 			iWeapon = SDKCall_GiveNamedItem(iClient, sClassname, iSubType, pItem);
 	}
