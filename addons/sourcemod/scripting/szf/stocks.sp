@@ -756,11 +756,11 @@ stock int TF2_CreateWeapon(int iClient, int iIndex, ConfigAttributes attribs = g
 	
 	int iWeapon = -1;
 	
-	if (bAllowReskin)
+	// Disabled until Address issues fixed...
+	if (iWeapon == -1 && bAllowReskin)
 	{
 		int iSlot = TF2Econ_GetItemLoadoutSlot(iIndex, iClass);	//Uses econ slot
 		Address pItem = SDKCall_GetLoadoutItem(iClient, iClass, iSlot);
-		PrintToServer("(LoadFromAddress(%x + %x)", pItem, g_iOffsetItemDefinitionIndex);
 		if (pItem && Config_GetOriginalItemDefIndex(LoadFromAddress(pItem+view_as<Address>(g_iOffsetItemDefinitionIndex), NumberType_Int16)) == iIndex)
 			iWeapon = SDKCall_GiveNamedItem(iClient, sClassname, iSubType, pItem);
 	}

@@ -2145,8 +2145,8 @@ void HandleSurvivorLoadout(int iClient)
 				if (g_flStopChatSpam[iClient] < flGameTime && melee.sText[0])
 				{
 					// Using first attrib listed to display its value
-					float flValue = TF2_TranslateAttributeValue(melee.attribs.iIndex[0], melee.attribs.flValue[0]);
-					CPrintToChat(iClient, "%t", melee.sText, RoundToNearest(flValue));
+					//float flValue = TF2_TranslateAttributeValue(melee.attribs.iIndex[0], melee.attribs.flValue[0]);
+					//CPrintToChat(iClient, "%t", melee.sText, RoundToNearest(flValue));
 					g_flStopChatSpam[iClient] = flGameTime + 1.0;
 				}
 					
