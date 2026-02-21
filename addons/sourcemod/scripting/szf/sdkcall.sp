@@ -4,7 +4,7 @@ static Handle g_hSDKCallPlaySpecificSequence;
 static Handle g_hSDKCallGetEquippedWearable;
 static Handle g_hSDKCallGiveNamedItem;
 static Handle g_hSDKCallGetLoadoutItem;
-static Handle g_hSDKCallSetSpeed;
+//static Handle g_hSDKCallSetSpeed;
 static Handle g_hSDKCallTossJarThink;
 static Handle g_hSDKCallGetVelocity;
 static Handle g_hSDKCallGetDefaultItemChargeMeterValue;
@@ -64,11 +64,11 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 	if (!g_hSDKCallGetLoadoutItem)
 		LogError("Failed to create call: CTFPlayer::GetLoadoutItem");
 	
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(hSZF, SDKConf_Signature, "CTFPlayer::TeamFortress_SetSpeed");
-	g_hSDKCallSetSpeed = EndPrepSDKCall();
-	if (!g_hSDKCallSetSpeed)
-		LogError("Failed to create call: CTFPlayer::TeamFortress_SetSpeed");
+	//StartPrepSDKCall(SDKCall_Entity);
+	//PrepSDKCall_SetFromConf(hSZF, SDKConf_Signature, "CTFPlayer::TeamFortress_SetSpeed");
+	//g_hSDKCallSetSpeed = EndPrepSDKCall();
+	//if (!g_hSDKCallSetSpeed)
+	//	LogError("Failed to create call: CTFPlayer::TeamFortress_SetSpeed");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hSZF, SDKConf_Virtual, "CTFJar::TossJarThink");
@@ -94,21 +94,31 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 
 int SDKCall_GetMaxHealth(int iClient)
 {
+	if(!g_hSDKCallGetMaxHealth)
+		return 100;
+	
 	return SDKCall(g_hSDKCallGetMaxHealth, iClient);
 }
 
 void SDKCall_EquipWearable(int iClient, int iWearable)
 {
-	SDKCall(g_hSDKCallEquipWearable, iClient, iWearable);
+	if(g_hSDKCallEquipWearable)
+		SDKCall(g_hSDKCallEquipWearable, iClient, iWearable);
 }
 
 bool SDKCall_PlaySpecificSequence(int iClient, const char[] sAnimationName)
 {
+	if(!g_hSDKCallPlaySpecificSequence)
+		return false;
+	
 	return SDKCall(g_hSDKCallPlaySpecificSequence, iClient, sAnimationName);
 }
 
 int SDKCall_GetEquippedWearable(int iClient, int iSlot)
 {
+	if(!g_hSDKCallGetEquippedWearable)
+		return -1;
+	
 	return SDKCall(g_hSDKCallGetEquippedWearable, iClient, iSlot);
 }
 
@@ -122,26 +132,35 @@ int SDKCall_GiveNamedItem(int iClient, const char[] sClassname, int iSubType, Ad
 
 Address SDKCall_GetLoadoutItem(int iClient, TFClassType iClass, int iSlot)
 {
+	if(!g_hSDKCallGetLoadoutItem)
+		return Address_Null;
+	
 	return SDKCall(g_hSDKCallGetLoadoutItem, iClient, iClass, iSlot, false);
 }
 
 void SDKCall_SetSpeed(int iClient)
 {
 	CalculateMaxSpeedPost(iClient);
-	SDKCall(g_hSDKCallSetSpeed, iClient);
+	TF2_AddCondition(iClient, TFCond_SpeedBuffAlly, 0.001);
+	//SDKCall(g_hSDKCallSetSpeed, iClient);
 }
 
 void SDKCall_TossJarThink(int iEntity)
 {
-	SDKCall(g_hSDKCallTossJarThink, iEntity);
+	if(g_hSDKCallTossJarThink)
+		SDKCall(g_hSDKCallTossJarThink, iEntity);
 }
 
 void SDKCall_GetVelocity(int iEntity, float vecVelocity[3], Address pAngVelocity = Address_Null)
 {
-	SDKCall(g_hSDKCallGetVelocity, iEntity, vecVelocity, pAngVelocity);
+	if(g_hSDKCallGetVelocity)
+		SDKCall(g_hSDKCallGetVelocity, iEntity, vecVelocity, pAngVelocity);
 }
 
 float SDKCall_GetDefaultItemChargeMeterValue(int iWeapon)
 {
+	if(!g_hSDKCallGetDefaultItemChargeMeterValue)
+		return 0.0;
+	
 	return SDKCall(g_hSDKCallGetDefaultItemChargeMeterValue, iWeapon);
 }

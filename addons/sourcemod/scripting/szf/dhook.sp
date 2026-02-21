@@ -100,7 +100,7 @@ void CalculateMaxSpeedPost(int iClient)
 		if (flSpeed <= 1.0)	// Do not set speed to negative or you'll send em to the backrooms
 			flSpeed = 1.0;
 		
-		TF2Attrib_SetByName(iClient, "major move speed bonus", flSpeed / flDefault);
+		SetAttrib(iClient, "major move speed bonus", flSpeed / flDefault);
 	}
 }
 

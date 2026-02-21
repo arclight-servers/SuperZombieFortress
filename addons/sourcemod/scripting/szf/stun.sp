@@ -97,7 +97,7 @@ bool Stun_StartPlayer(int iClient, float flDuration = 6.0)
 	}
 	
 	SetEntProp(iClient, Prop_Send, "m_iHideHUD", GetEntProp(iClient, Prop_Send, "m_iHideHUD")|BLIND_HIDEHUD);
-	TF2Attrib_SetByName(iClient, "deploy time increased", 2.0);
+	SetAttrib(iClient, "deploy time increased", 2.0);
 	
 	SDKHook(iClient, SDKHook_PostThinkPost, Stun_ClientThink);
 	hTimer = CreateTimer(flDuration, Stun_EndPlayerTimer, GetClientSerial(iClient));
@@ -132,7 +132,7 @@ void Stun_EndPlayer(int iClient)
 	if (IsPlayerAlive(iClient))
 		SetEntProp(iClient, Prop_Send, "m_iHideHUD", GetEntProp(iClient, Prop_Send, "m_iHideHUD") & ~BLIND_HIDEHUD);
 	
-	TF2Attrib_RemoveByName(iClient, "deploy time increased");
+	RemoveAttrib(iClient, "deploy time increased");
 	
 	TF2_RemoveCondition(iClient, TFCond_LostFooting);
 	SDKUnhook(iClient, SDKHook_PostThinkPost, Stun_ClientThink);

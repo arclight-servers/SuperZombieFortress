@@ -15,6 +15,9 @@
 #tryinclude <tf2items>
 #define REQUIRE_EXTENSIONS
 
+#undef REQUIRE_PLUGIN
+#include <sm_vscript_comms>
+
 #pragma newdecls required
 
 #include "include/superzombiefortress.inc"

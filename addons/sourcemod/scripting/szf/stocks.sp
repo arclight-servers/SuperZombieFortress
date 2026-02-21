@@ -214,20 +214,20 @@ stock void AddWeaponVision(int iWeapon, int iFlag)
 {
 	//Get current flag and add into it
 	float flVal = float(TF_VISION_FILTER_NONE);
-	TF2_WeaponFindAttribute(iWeapon, ATTRIB_VISION, flVal);
+	TF2_WeaponFindAttribute(iWeapon, ATTRIB_VISION, "vision opt in flags", flVal);
 	flVal = float(RoundToNearest(flVal) | iFlag);
-	TF2Attrib_SetByDefIndex(iWeapon, ATTRIB_VISION, flVal);
+	SetAttrib(iWeapon, "vision opt in flags", flVal);
 }
 
 stock void RemoveWeaponVision(int iWeapon, int iFlag)
 {
 	//If have vision, get current flag and remove it
 	float flVal = float(TF_VISION_FILTER_NONE);
-	if (!TF2_WeaponFindAttribute(iWeapon, ATTRIB_VISION, flVal))
+	if (!TF2_WeaponFindAttribute(iWeapon, ATTRIB_VISION, "vision opt in flags", flVal))
 		return;
 	
 	flVal = float(RoundToNearest(flVal) & ~iFlag);
-	TF2Attrib_SetByDefIndex(iWeapon, ATTRIB_VISION, flVal);
+	SetAttrib(iWeapon, "vision opt in flags", flVal);
 }
 
 stock void PrecacheSound2(const char[] sSoundPath)
@@ -756,8 +756,9 @@ stock int TF2_CreateWeapon(int iClient, int iIndex, ConfigAttributes attribs = g
 	
 	int iWeapon = -1;
 	
-	// Disabled until Address issues fixed...
-	if (iWeapon == -1 && bAllowReskin)
+	bAllowReskin = false;// Disabled until Address issues fixed...
+
+	if (bAllowReskin)
 	{
 		int iSlot = TF2Econ_GetItemLoadoutSlot(iIndex, iClass);	//Uses econ slot
 		Address pItem = SDKCall_GetLoadoutItem(iClient, iClass, iSlot);
@@ -828,8 +829,49 @@ stock void TF2_WeaponApplyAttribute(int iClient, int iWeapon, ConfigAttributes a
 	}
 }
 
-stock bool TF2_WeaponFindAttribute(int iWeapon, int iAttrib, float &flVal)
+stock bool TF2_WeaponFindAttribute(int iWeapon, int iAttrib, const char[] strAttrib, float &flVal)
 {
+	static bool Tested;
+	static VScriptHandle VCGetAttribute;
+	static VScriptHandle VCGetCustomAttribute;
+	if(!Tested)
+	{
+		Tested = true;
+		if(GetFeatureStatus(FeatureType_Native, "StartPrepVScriptCall") == FeatureStatus_Available)
+		{
+			StartPrepVScriptCall(VScriptScope_EntityInstance);
+			PrepVScriptCall_SetFunction("GetAttribute");
+			PrepVScriptCall_SetReturnType(VScriptReturnType_Float);
+			PrepVScriptCall_AddParameter(VScriptParamType_Entity);
+			PrepVScriptCall_AddParameter(VScriptParamType_String);
+			PrepVScriptCall_AddParameter(VScriptParamType_Float);
+			VCGetAttribute = EndPrepVScriptCall();
+
+			StartPrepVScriptCall(VScriptScope_EntityInstance);
+			PrepVScriptCall_SetFunction("GetCustomAttribute");
+			PrepVScriptCall_SetReturnType(VScriptReturnType_Float);
+			PrepVScriptCall_AddParameter(VScriptParamType_Entity);
+			PrepVScriptCall_AddParameter(VScriptParamType_String);
+			PrepVScriptCall_AddParameter(VScriptParamType_Float);
+			VCGetCustomAttribute = EndPrepVScriptCall();
+		}
+	}
+
+	if(VCGetAttribute && VCGetCustomAttribute)
+	{
+		char strAttrib2[64];
+		strcopy(strAttrib2, sizeof(strAttrib2), strAttrib);
+
+		flVal = -9.9;
+		
+		StartVScriptFunc(iWeapon > MaxClients ? VCGetAttribute : VCGetCustomAttribute);
+		VScriptFunc_PushEntity(iWeapon);
+		VScriptFunc_PushString(strAttrib2);
+		VScriptFunc_PushFloat(flVal);
+		flVal = FireVScriptFunc_ReturnAny();
+		return flVal != -9.9;
+	}
+
 	Address addAttrib = TF2Attrib_GetByDefIndex(iWeapon, iAttrib);
 	if (addAttrib == Address_Null)
 		return TF2_DefIndexFindAttribute(GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex"), iAttrib, flVal);
@@ -1327,4 +1369,20 @@ stock bool CanRecieveDamage(int iClient)
 		return false;
 	
 	return true;
+}
+
+stock void SetAttrib(int iEntity, const char[] strAttrib, float flValue)
+{
+	char buffer[128];
+	Format(buffer, sizeof(buffer), "self.Add%sAttribute(\"%s\", %f, -1.0)", iEntity > MaxClients ? "" : "Custom", strAttrib, flValue);
+	SetVariantString(buffer);
+	AcceptEntityInput(iEntity, "RunScriptCode");
+}
+
+stock void RemoveAttrib(int iEntity, const char[] strAttrib)
+{
+	char buffer[128];
+	Format(buffer, sizeof(buffer), "self.Remove%sAttribute(\"%s\")", iEntity > MaxClients ? "" : "Custom", strAttrib);
+	SetVariantString(buffer);
+	AcceptEntityInput(iEntity, "RunScriptCode");
 }
