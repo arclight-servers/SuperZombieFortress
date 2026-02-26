@@ -162,7 +162,7 @@ stock void AddModelToDownloadsTable(const char[] sModel)
 	{
 		char sBuffer[PLATFORM_MAX_PATH];
 		Format(sBuffer, sizeof(sBuffer), "%s.%s", sRoot, sFileType[i]);
-		if (FileExists(sBuffer))
+		if (FileExists(sBuffer, true))
 			AddFileToDownloadsTable(sBuffer);
 	}
 }
