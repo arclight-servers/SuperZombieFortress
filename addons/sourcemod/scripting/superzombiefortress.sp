@@ -2327,7 +2327,6 @@ void OnClientDisguise(int iClient)
 	if (iWeapon == INVALID_ENT_REFERENCE)
 	{
 		iWeapon = TF2_CreateWeapon(iClient, iIndex);	// dont want to actually equip it
-		SetEntPropEnt(iWeapon, Prop_Send, "m_hOwner", iClient);
 		SetEntPropEnt(iWeapon, Prop_Send, "m_hOwnerEntity", iClient);
 		
 		SetEntityMoveType(iWeapon, MOVETYPE_NONE);
