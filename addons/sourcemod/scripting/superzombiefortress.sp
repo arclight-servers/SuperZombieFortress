@@ -1,6 +1,5 @@
 #pragma semicolon 1
 
-#include <virtual_address>
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
