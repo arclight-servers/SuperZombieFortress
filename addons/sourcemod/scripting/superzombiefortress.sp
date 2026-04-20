@@ -12,11 +12,9 @@
 
 #undef REQUIRE_EXTENSIONS
 #tryinclude <tf2items>
+#include <vscript>
+
 #define REQUIRE_EXTENSIONS
-
-#undef REQUIRE_PLUGIN
-#include <sm_vscript_comms>
-
 #pragma newdecls required
 
 #include "include/superzombiefortress.inc"

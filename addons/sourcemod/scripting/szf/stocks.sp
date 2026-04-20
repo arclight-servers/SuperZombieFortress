@@ -832,43 +832,38 @@ stock void TF2_WeaponApplyAttribute(int iClient, int iWeapon, ConfigAttributes a
 stock bool TF2_WeaponFindAttribute(int iWeapon, int iAttrib, const char[] strAttrib, float &flVal)
 {
 	static bool Tested;
-	static VScriptHandle VCGetAttribute;
-	static VScriptHandle VCGetCustomAttribute;
+	static ScriptCall ScriptGetAttribute;
+	static ScriptCall ScriptGetCustomAttribute;
 	if(!Tested)
 	{
 		Tested = true;
-		if(GetFeatureStatus(FeatureType_Native, "StartPrepVScriptCall") == FeatureStatus_Available)
+		if(GetFeatureStatus(FeatureType_Native, "VScript_EntityToHScript") == FeatureStatus_Available)
 		{
-			StartPrepVScriptCall(VScriptScope_EntityInstance);
-			PrepVScriptCall_SetFunction("GetAttribute");
-			PrepVScriptCall_SetReturnType(VScriptReturnType_Float);
-			PrepVScriptCall_AddParameter(VScriptParamType_Entity);
-			PrepVScriptCall_AddParameter(VScriptParamType_String);
-			PrepVScriptCall_AddParameter(VScriptParamType_Float);
-			VCGetAttribute = EndPrepVScriptCall();
-
-			StartPrepVScriptCall(VScriptScope_EntityInstance);
-			PrepVScriptCall_SetFunction("GetCustomAttribute");
-			PrepVScriptCall_SetReturnType(VScriptReturnType_Float);
-			PrepVScriptCall_AddParameter(VScriptParamType_Entity);
-			PrepVScriptCall_AddParameter(VScriptParamType_String);
-			PrepVScriptCall_AddParameter(VScriptParamType_Float);
-			VCGetCustomAttribute = EndPrepVScriptCall();
+			ScriptGetAttribute = new ScriptCall("GetAttribute", ScriptField_Float, ScriptField_String, ScriptField_Float);
+			ScriptGetCustomAttribute = new ScriptCall("GetCustomAttribute", ScriptField_Float, ScriptField_String, ScriptField_Float);
 		}
 	}
 
-	if(VCGetAttribute && VCGetCustomAttribute)
+	if(ScriptGetAttribute && ScriptGetCustomAttribute)
 	{
 		char strAttrib2[64];
 		strcopy(strAttrib2, sizeof(strAttrib2), strAttrib);
 
 		flVal = -9.9;
+
+		ScriptHandle hweapon = VScript_EntityToHScript(iWeapon, true);
 		
-		StartVScriptFunc(iWeapon > MaxClients ? VCGetAttribute : VCGetCustomAttribute);
-		VScriptFunc_PushEntity(iWeapon);
-		VScriptFunc_PushString(strAttrib2);
-		VScriptFunc_PushFloat(flVal);
-		flVal = FireVScriptFunc_ReturnAny();
+		if(iWeapon > MaxClients)
+		{
+			if(ScriptGetAttribute.ExecuteInScope(hweapon, strAttrib, flVal) == ScriptStatus_Done)
+				flVal = ScriptGetAttribute.GetReturnFloat();
+		}
+		else
+		{
+			if(ScriptGetCustomAttribute.ExecuteInScope(hweapon, strAttrib, flVal) == ScriptStatus_Done)
+				flVal = ScriptGetCustomAttribute.GetReturnFloat();
+		}
+		
 		return flVal != -9.9;
 	}
 
