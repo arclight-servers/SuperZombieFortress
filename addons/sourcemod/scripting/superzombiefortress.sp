@@ -2323,7 +2323,7 @@ void OnClientDisguise(int iClient)
 public void SetThirdperson(int iSerial)
 {
 	int iClient = GetClientFromSerial(iSerial);
-	if (IsValidLivingClient(iClient))
+	if (IsValidLivingZombie(iClient))
 	{
 		SetVariantInt(1);
 		AcceptEntityInput(iClient, "SetForcedTauntCam");
