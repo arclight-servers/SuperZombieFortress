@@ -79,7 +79,7 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hSZF, SDKConf_Virtual, "CBaseEntity::GetVelocity");
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL, VENCODE_FLAG_COPYBACK);
-	PrepSDKCall_AddParameter(SDKType_VirtualAddress, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_VirtualAddress, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);
 	g_hSDKCallGetVelocity = EndPrepSDKCall();
 	if (!g_hSDKCallGetVelocity)
 		LogError("Failed to create call: CBaseEntity::GetVelocity");
