@@ -47,7 +47,7 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 	PrepSDKCall_SetFromConf(hSZF, SDKConf_Virtual, "CTFPlayer::GiveNamedItem");
 	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
-	PrepSDKCall_AddParameter(SDKType_VirtualAddress, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_Address, SDKPass_Plain);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
 	g_hSDKCallGiveNamedItem = EndPrepSDKCall();
@@ -59,7 +59,7 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
-	PrepSDKCall_SetReturnInfo(SDKType_VirtualAddress, SDKPass_ByValue);
+	PrepSDKCall_SetReturnInfo(SDKType_Address, SDKPass_Plain);
 	g_hSDKCallGetLoadoutItem = EndPrepSDKCall();
 	if (!g_hSDKCallGetLoadoutItem)
 		LogError("Failed to create call: CTFPlayer::GetLoadoutItem");
@@ -79,7 +79,7 @@ void SDKCall_Init(GameData hSDKHooks, GameData hTF2, GameData hSZF)
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hSZF, SDKConf_Virtual, "CBaseEntity::GetVelocity");
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL, VENCODE_FLAG_COPYBACK);
-	PrepSDKCall_AddParameter(SDKType_VirtualAddress, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_Address, SDKPass_Plain, VDECODE_FLAG_ALLOWNULL);
 	g_hSDKCallGetVelocity = EndPrepSDKCall();
 	if (!g_hSDKCallGetVelocity)
 		LogError("Failed to create call: CBaseEntity::GetVelocity");
@@ -122,7 +122,9 @@ int SDKCall_GiveNamedItem(int iClient, const char[] sClassname, int iSubType, Ad
 
 Address SDKCall_GetLoadoutItem(int iClient, TFClassType iClass, int iSlot)
 {
-	return SDKCall(g_hSDKCallGetLoadoutItem, iClient, iClass, iSlot, false);
+	Address pItem = Address_Null;
+	SDKCall(g_hSDKCallGetLoadoutItem, iClient, pItem, iClass, iSlot, false);
+	return pItem;
 }
 
 void SDKCall_SetSpeed(int iClient)
@@ -135,9 +137,9 @@ void SDKCall_TossJarThink(int iEntity)
 	SDKCall(g_hSDKCallTossJarThink, iEntity);
 }
 
-void SDKCall_GetVelocity(int iEntity, float vecVelocity[3], Address pAngVelocity = Address_Null)
+void SDKCall_GetVelocity(int iEntity, float vecVelocity[3])
 {
-	SDKCall(g_hSDKCallGetVelocity, iEntity, vecVelocity, pAngVelocity);
+	SDKCall(g_hSDKCallGetVelocity, iEntity, vecVelocity, Address_Null);
 }
 
 float SDKCall_GetDefaultItemChargeMeterValue(int iWeapon)

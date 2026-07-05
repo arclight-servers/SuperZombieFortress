@@ -298,7 +298,7 @@ public MRESReturn DHook_OnGiveNamedItemPre(int iClient, DHookReturn hReturn, DHo
 	// Block if one of the pointers is null
 	if (hParams.IsNull(1) || hParams.IsNull(3))
 	{
-		hReturn.Value = 0;
+		hReturn.Value = -1;
 		return MRES_Supercede;
 	}
 	
@@ -308,7 +308,7 @@ public MRESReturn DHook_OnGiveNamedItemPre(int iClient, DHookReturn hReturn, DHo
 	
 	if (iAction == Plugin_Handled)
 	{
-		hReturn.Value = 0;
+		hReturn.Value = -1;
 		return MRES_Supercede;
 	}
 	

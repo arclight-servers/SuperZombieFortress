@@ -761,7 +761,7 @@ stock int TF2_CreateWeapon(int iClient, int iIndex, ConfigAttributes attribs = g
 		int iSlot = TF2Econ_GetItemLoadoutSlot(iIndex, iClass);	//Uses econ slot
 		Address pItem = SDKCall_GetLoadoutItem(iClient, iClass, iSlot);
 		
-		if (pItem && Config_GetOriginalItemDefIndex(LoadFromAddress(pItem+view_as<Address>(g_iOffsetItemDefinitionIndex), NumberType_Int16)) == iIndex)
+		if (pItem && Config_GetOriginalItemDefIndex(LoadFromAddress(pItem + g_iOffsetItemDefinitionIndex, NumberType_Int16)) == iIndex)
 			iWeapon = SDKCall_GiveNamedItem(iClient, sClassname, iSubType, pItem);
 	}
 	
@@ -886,7 +886,9 @@ stock float TF2_TranslateAttributeValue(int iIndex, float flValue)
 	};
 	
 	Address pAttrib = TF2Econ_GetAttributeDefinitionAddress(iIndex);
-	int iFormat = LoadFromAddress(pAttrib + view_as<Address>(0x24), NumberType_Int32);
+	// CEconItemAttributeDefinition::m_iDescriptionFormat: 0x24 (x86) / 0x30 (x64)
+	// 3 pointer-sized fields (m_pKVAttribute, m_nDefIndex+pad, m_pAttrType) + 24 fixed bytes through m_iEffectType
+	int iFormat = LoadFromAddress(pAttrib + 3 * Address_PointerSize + 24, NumberType_Int32);
 	
 	switch (iFormat)
 	{
