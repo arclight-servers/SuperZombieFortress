@@ -241,7 +241,7 @@ StringMap Config_LoadWeaponReskinData()
 bool Config_LoadClassesSection(KeyValues kv, ClientClasses classes)
 {
 	//Survivor, Zombie and Infected
-	classes.bEnabled = !!kv.GetNum("enable", classes.bEnabled);
+	classes.bEnabled = kv.GetNum("enable", classes.bEnabled) != 0;
 	classes.iRegen = kv.GetNum("regen", classes.iRegen);
 	classes.flSpeed = kv.GetFloat("speed", classes.flSpeed);
 	
@@ -254,8 +254,8 @@ bool Config_LoadClassesSection(KeyValues kv, ClientClasses classes)
 	classes.aWeapons = Config_GetWeaponClasses(kv);
 	classes.flHorde = kv.GetFloat("horde", classes.flHorde);
 	classes.flMaxHorde = kv.GetFloat("maxhorde", classes.flMaxHorde);
-	classes.bGlow = !!kv.GetNum("glow", classes.bGlow);
-	classes.bThirdperson = !!kv.GetNum("thirdperson", classes.bThirdperson);
+	classes.bGlow = kv.GetNum("glow", classes.bGlow) != 0;
+	classes.bThirdperson = kv.GetNum("thirdperson", classes.bThirdperson) != 0;
 	
 	//GetColor4 dont have default buffer to set
 	char sBuffer[1];
