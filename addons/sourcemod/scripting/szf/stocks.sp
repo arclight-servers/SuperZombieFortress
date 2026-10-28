@@ -886,6 +886,9 @@ stock float TF2_TranslateAttributeValue(int iIndex, float flValue)
 	};
 	
 	Address pAttrib = TF2Econ_GetAttributeDefinitionAddress(iIndex);
+	if (!pAttrib)
+		return 0.0;
+	
 	// CEconItemAttributeDefinition::m_iDescriptionFormat: 0x24 (x86) / 0x30 (x64)
 	// 3 pointer-sized fields (m_pKVAttribute, m_nDefIndex+pad, m_pAttrType) + 24 fixed bytes through m_iEffectType
 	int iFormat = LoadFromAddress(pAttrib + 3 * Address_PointerSize + 24, NumberType_Int32);
