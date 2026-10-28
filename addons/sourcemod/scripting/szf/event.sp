@@ -231,7 +231,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		g_iKillsThisLife[iKillers[0]]++;
 		
 		//50%
-		if (g_nNextInfected[iKillers[0]] == Infected_None && !GetRandomInt(0, 1) && g_nRoundState == SZFRoundState_Active)
+		if (g_nNextInfected[iKillers[0]] == Infected_None && !GetRandomInt(0, 1) && g_nRoundState == SZFRoundState_Active && IsValidSurvivor(iVictim))
 			g_bSpawnAsSpecialInfected[iKillers[0]] = true;
 		
 		if (g_iKillsThisLife[iKillers[0]] == 3 && g_nInfected[iKillers[0]] != Infected_Tank)
@@ -241,7 +241,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	if (!bDeadRinger && IsValidZombie(iKillers[1]) && iKillers[1] != iVictim)
 	{
 		//20%
-		if (g_nNextInfected[iVictim] == Infected_None && !GetRandomInt(0, 4) && g_nRoundState == SZFRoundState_Active)
+		if (g_nNextInfected[iKillers[1]] == Infected_None && !GetRandomInt(0, 4) && g_nRoundState == SZFRoundState_Active && IsValidSurvivor(iVictim))
 			g_bSpawnAsSpecialInfected[iKillers[1]] = true;
 	}
 	

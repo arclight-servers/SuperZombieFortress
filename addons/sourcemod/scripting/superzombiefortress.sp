@@ -404,6 +404,7 @@ Handle g_hTimerMainSlow;
 Handle g_hTimerHoarde;
 Handle g_hTimerDataCollect;
 Handle g_hTimerProgress;
+Handle g_hTimerZombieRage;
 
 //Cvar Handles
 ConVar g_cvForceOn;
@@ -843,6 +844,7 @@ public void OnClientDisconnect(int iClient)
 	CheckLastSurvivor(iClient);
 	
 	Weapons_ClientDisconnect(iClient);
+	Infected_ResetJockey(iClient);
 }
 
 public void OnEntityCreated(int iEntity, const char[] sClassname)
@@ -1500,6 +1502,9 @@ void SZFDisable()
 	delete g_hTimerHoarde;
 	delete g_hTimerDataCollect;
 	delete g_hTimerProgress;
+	delete g_hTimerZombieRage;
+	
+	g_bZombieRage = false;
 	
 	//Enable resupply lockers.
 	int iEntity = -1;
@@ -1512,6 +1517,8 @@ void ResetClientState(int iClient)
 	g_iHorde[iClient] = 0;
 	g_iCapturingPoint[iClient] = -1;
 	g_iRageTimer[iClient] = 0;
+	
+	Infected_ResetJockey(iClient);
 }
 
 void PrintInfoChat(int iClient)
@@ -1553,7 +1560,7 @@ void SetGlow()
 void Frame_CheckZombieBypass(int iSerial)
 {
 	int iClient = GetClientFromSerial(iSerial);
-	if (TF2_GetClientTeam(iClient) <= TFTeam_Spectator)
+	if (iClient && IsClientInGame(iClient) && TF2_GetClientTeam(iClient) <= TFTeam_Spectator)
 		CheckZombieBypass(iClient);
 }
 
@@ -1696,7 +1703,7 @@ void UpdateZombieDamageScale()
 		}
 		else if (g_FrenzyEvent.CanDoEvent())
 		{
-			if (GetRandomFloat(0.0, 1.0) < g_cvFrenzyTankChance.IntValue)
+			if (GetRandomFloat(0.0, 1.0) < g_cvFrenzyTankChance.FloatValue)
 				ZombieTank();
 			else
 				ZombieRage();
@@ -1908,7 +1915,8 @@ void ZombieRage(float flDuration = 20.0, bool bIgnoreDirector = false)
 	float flGameTime = GetGameTime();
 	g_flRageRespawnStress = flGameTime;	//Set initial respawn stress
 	
-	CreateTimer(flDuration, Timer_StopZombieRage);
+	delete g_hTimerZombieRage;
+	g_hTimerZombieRage = CreateTimer(flDuration, Timer_StopZombieRage);
 	
 	if (flDuration >= 20.0)
 	{
@@ -1933,6 +1941,10 @@ void ZombieRage(float flDuration = 20.0, bool bIgnoreDirector = false)
 
 public Action Timer_StopZombieRage(Handle hTimer)
 {
+	if (hTimer != g_hTimerZombieRage)
+		return Plugin_Continue;
+	
+	g_hTimerZombieRage = null;
 	g_bZombieRage = false;
 	UpdateZombieDamageScale();
 	

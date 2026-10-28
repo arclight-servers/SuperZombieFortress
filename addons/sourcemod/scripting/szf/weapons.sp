@@ -101,7 +101,7 @@ bool GetWeaponFromEntity(Weapon buffer, int iEntity)
 	return false;
 }
 
-void GetWeaponFromIndex(Weapon buffer, int iIndex)
+bool GetWeaponFromIndex(Weapon buffer, int iIndex)
 {
 	int iLength = g_Weapons.Length;
 	for (int i = 0; i < iLength; i++) 
@@ -112,9 +112,11 @@ void GetWeaponFromIndex(Weapon buffer, int iIndex)
 		if (iIndex == wep.iIndex)
 		{
 			buffer = wep;
-			return;
+			return true;
 		}
 	}
+	
+	return false;
 }
 
 ArrayList GetAllWeaponsWithRarity(WeaponRarity iRarity, ArrayList aSpawnWeapons = null, TFClassType nFilter = TFClass_Unknown)

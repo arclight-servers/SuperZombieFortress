@@ -877,20 +877,24 @@ public void Infected_OnHunterTouch(int iClient, int iToucher)
 		return;
 	
 	const float flDuration = 5.5;
-	if (Stun_StartPlayer(iToucher, flDuration))
+	if (Stun_CanStartPlayer(iToucher))
 	{
-		SetEntityHealth(iToucher, GetClientHealth(iToucher) - 20);
-		SetNextAttack(iClient, GetGameTime() + 2.0);
+		SDKHooks_TakeDamage(iToucher, iClient, iClient, 20.0, DMG_PREVENT_PHYSICS_FORCE);
 		
-		//Teleport hunter inside the target
-		float vecPosClient[3];
-		GetClientAbsOrigin(iToucher, vecPosClient);
-		TeleportEntity(iClient, vecPosClient, NULL_VECTOR, NULL_VECTOR);
-		
-		TF2_StunPlayer(iToucher, flDuration, 0.5, TF_STUNFLAGS_GHOSTSCARE|TF_STUNFLAG_SLOWDOWN, 0);
-		TF2_StunPlayer(iClient, flDuration, 1.0, TF_STUNFLAG_SLOWDOWN, 0);
-		
-		Forward_OnHunterHit(iClient, iToucher);
+		if (IsPlayerAlive(iToucher) && !TF2_IsPlayerInCondition(iToucher, TFCond_DeadRingered) && Stun_StartPlayer(iToucher, flDuration))
+		{
+			SetNextAttack(iClient, GetGameTime() + 2.0);
+			
+			//Teleport hunter inside the target
+			float vecPosClient[3];
+			GetClientAbsOrigin(iToucher, vecPosClient);
+			TeleportEntity(iClient, vecPosClient, NULL_VECTOR, NULL_VECTOR);
+			
+			TF2_StunPlayer(iToucher, flDuration, 0.5, TF_STUNFLAGS_GHOSTSCARE|TF_STUNFLAG_SLOWDOWN, 0);
+			TF2_StunPlayer(iClient, flDuration, 1.0, TF_STUNFLAG_SLOWDOWN, 0);
+			
+			Forward_OnHunterHit(iClient, iToucher);
+		}
 	}
 	
 	g_bHunterIsUsingPounce[iClient] = false;
@@ -1362,12 +1366,17 @@ public void Infected_OnJockeyThink(int iClient, int &iButtons)
 			float vecJockeyEye[3], vecTargetEye[3], vecJockeyVel[3], vecTargetVel[3], vecFinalVel[3];
 			GetClientEyeAngles(iClient, vecJockeyEye);
 			GetClientEyeAngles(iTarget, vecTargetEye);
-			vecJockeyEye[2] = 0.0;
-			vecTargetEye[2] = 0.0;
+			vecJockeyEye[0] = 0.0;
+			vecTargetEye[0] = 0.0;
 			AnglesToVelocity(vecJockeyEye, vecJockeyVel, flSpeed * g_cvJockeyMovementAttacker.FloatValue);
 			AnglesToVelocity(vecTargetEye, vecTargetVel, flSpeed * g_cvJockeyMovementVictim.FloatValue);
 			
 			AddVectors(vecJockeyVel, vecTargetVel, vecFinalVel);
+			
+			float vecTargetVelocity[3];
+			GetEntPropVector(iTarget, Prop_Data, "m_vecVelocity", vecTargetVelocity);
+			vecFinalVel[2] = vecTargetVelocity[2];
+			
 			TeleportEntity(iTarget, NULL_VECTOR, NULL_VECTOR, vecFinalVel);
 			
 			//Teleport jockey to target eye
@@ -1412,6 +1421,22 @@ public void Infected_OnJockeyTouch(int iClient, int iToucher)
 
 public void Infected_OnJockeyDeath(int iClient, int iKiller, int iAssist)
 {
+	Infected_ResetJockey(iClient);
+}
+
+void Infected_ResetJockey(int iClient)
+{
+	int iTarget = g_iJockeyTarget[iClient];
+	
 	g_bJockeyIsUsingPounce[iClient] = false;
 	g_iJockeyTarget[iClient] = 0;
+	
+	if (!(0 < iTarget <= MaxClients))
+		return;
+	
+	if (IsClientInGame(iClient))
+	{
+		SetEntityMoveType(iClient, MOVETYPE_WALK);
+		SetEntityCollisionGroup(iClient, COLLISION_GROUP_PLAYER);
+	}
 }

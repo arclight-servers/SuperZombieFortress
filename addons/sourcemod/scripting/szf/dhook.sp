@@ -432,6 +432,12 @@ public MRESReturn DHook_RoundRespawnPre()
 	if (g_nRoundState == SZFRoundState_Setup)
 		return MRES_Ignored;
 	
+	if (g_hTimerZombieRage)
+	{
+		delete g_hTimerZombieRage;
+		g_bZombieRage = false;
+	}
+	
 	DetermineControlPoints();
 	
 	g_bLastSurvivor = false;
@@ -567,7 +573,7 @@ public MRESReturn DHook_RoundRespawnPre()
 	g_iRoundTimestamp = GetTime();
 	
 	//Handle grace period timers.
-	CreateTimer(0.5, Timer_GraceStartPost, TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(0.5, Timer_GraceStartPost, _, TIMER_FLAG_NO_MAPCHANGE);
 	
 	SetGlow();
 	UpdateZombieDamageScale();

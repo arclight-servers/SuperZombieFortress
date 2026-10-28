@@ -32,8 +32,11 @@ public Action Command_ServerRage(int iArgs)
 		return Plugin_Continue;
 	
 	char sDuration[256];
-	GetCmdArgString(sDuration, sizeof(sDuration));
+	GetCmdArg(1, sDuration, sizeof(sDuration));
 	float flDuration = StringToFloat(sDuration);
+	
+	if (flDuration <= 0.0)
+		flDuration = 20.0;
 	
 	ZombieRage(flDuration);
 	return Plugin_Handled;

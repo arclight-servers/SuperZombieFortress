@@ -284,7 +284,7 @@ int Sort_SpawnWeapons(int iIndex1, int iIndex2, Handle hArray, Handle hData)
 
 bool AttemptGrabItem(int iClient)
 {	
-	if (!IsSurvivor(iClient) || !g_bCanPickup[iClient] || TF2_IsPlayerInCondition(iClient, TFCond_Taunting))
+	if (!IsSurvivor(iClient) || !IsPlayerAlive(iClient) || !g_bCanPickup[iClient] || TF2_IsPlayerInCondition(iClient, TFCond_Taunting))
 		return false;
 	
 	int iTarget = GetClientPointVisible(iClient);
@@ -470,9 +470,7 @@ void PickupWeapon(int iClient, Weapon wep, int iTarget)
 		if (IsValidEntity(iEntity))
 		{
 			int iOldIndex = Config_GetOriginalItemDefIndex(GetEntProp(iEntity, Prop_Send, "m_iItemDefinitionIndex"));
-			GetWeaponFromIndex(oldwep, iOldIndex);
-			
-			if (oldwep.iIndex >= 0)
+			if (GetWeaponFromIndex(oldwep, iOldIndex) && oldwep.iIndex >= 0)
 			{
 				EmitSoundToClient(iClient, "ui/item_heavy_gun_drop.wav");
 				SetWeaponModel(iTarget, oldwep);

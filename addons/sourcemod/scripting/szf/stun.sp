@@ -52,6 +52,11 @@ bool Stun_IsPlayerStunned(int iClient)
 	return g_StunInfo[iClient].bStunned;
 }
 
+bool Stun_CanStartPlayer(int iClient)
+{
+	return !g_StunInfo[iClient].bStunned && !g_StunInfo[iClient].bCooldown;
+}
+
 bool Stun_StartPlayer(int iClient, float flDuration = 6.0)
 {
 	if (g_StunInfo[iClient].bStunned || g_StunInfo[iClient].bCooldown)
