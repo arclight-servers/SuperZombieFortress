@@ -101,7 +101,7 @@ public void SetWeapon(int iEntity)
 		case WeaponType_Rare:
 		{
 			//If rare weapon cap is unreached, make it a "rare" weapon
-			if (g_iAvailableRareCount > 0)
+			if (g_iAvailableRareCount > 0 && g_aWeaponsRares.Length > 0)
 			{
 				SetUniqueWeapon(iEntity, g_aWeaponsRares, WeaponRarity_Rare);
 				
@@ -132,7 +132,7 @@ public void SetWeapon(int iEntity)
 		case WeaponType_Default, WeaponType_DefaultNoPickup:
 		{
 			//If rare weapon cap is unreached and a dice roll is met, make it a "rare" weapon
-			if (g_iAvailableRareCount > 0 && GetRandomFloat(0.0, 1.0) < g_cvWeaponRareChance.FloatValue)
+			if (g_iAvailableRareCount > 0 && g_aWeaponsRares.Length > 0 && GetRandomFloat(0.0, 1.0) < g_cvWeaponRareChance.FloatValue)
 			{
 				SetUniqueWeapon(iEntity, g_aWeaponsRares, WeaponRarity_Rare);
 				g_iAvailableRareCount--;

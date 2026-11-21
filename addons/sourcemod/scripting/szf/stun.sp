@@ -110,6 +110,17 @@ bool Stun_StartPlayer(int iClient, float flDuration = 6.0)
 	return true;
 }
 
+void Stun_ResetClient(int iClient)
+{
+	if (g_StunInfo[iClient].bStunned && IsClientInGame(iClient))
+		ClientCommand(iClient, "r_screenoverlay\"\"");
+	
+	g_StunInfo[iClient].bStunned = false;
+	g_StunInfo[iClient].bCooldown = false;
+	g_StunInfo[iClient].iPreviousFogEnt = INVALID_ENT_REFERENCE;
+	delete g_StunInfo[iClient].aTimers;
+}
+
 void Stun_EndPlayer(int iClient)
 {
 	if (!g_StunInfo[iClient].bStunned)

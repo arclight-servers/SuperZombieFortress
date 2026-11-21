@@ -100,7 +100,15 @@ public Action Client_Touch(int iClient, int iToucher)
 public Action Client_OnTakeDamage(int iVictim, int &iAttacker, int &iInflicter, float &flDamage, int &iDamageType, int &iWeapon, float vecForce[3], float vecForcePos[3], int iDamageCustom)
 {
 	if (!CanRecieveDamage(iVictim))
+	{
+		if (iVictim != iAttacker && IsValidZombie(iVictim) && IsClassname(iInflicter, "obj_sentrygun"))
+		{
+			iDamageType |= DMG_PREVENT_PHYSICS_FORCE;
+			return Plugin_Changed;
+		}
+		
 		return Plugin_Continue;
+	}
 	
 	Debris debris;
 	if (Config_GetDebrisFromEntity(iInflicter, debris) && GetEntPropEnt(iInflicter, Prop_Send, "m_hOwnerEntity") != iAttacker)
@@ -202,7 +210,10 @@ public Action Client_OnTakeDamage(int iVictim, int &iAttacker, int &iInflicter, 
 		{
 			//Disable physics force from sentry damage
 			if (IsClassname(iInflicter, "obj_sentrygun"))
+			{
 				iDamageType |= DMG_PREVENT_PHYSICS_FORCE;
+				bChanged = true;
+			}
 		}
 	}
 	

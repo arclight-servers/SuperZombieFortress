@@ -817,6 +817,10 @@ public void OnClientPutInServer(int iClient)
 {
 	g_iDamageZombie[iClient] = 0;
 	g_flTimeStartAsZombie[iClient] = 0.0;
+	g_bSpawnAsSpecialInfected[iClient] = false;
+	g_nInfected[iClient] = Infected_None;
+	g_nNextInfected[iClient] = Infected_None;
+	Stun_ResetClient(iClient);
 	
 	if (AreClientCookiesCached(iClient))
 		OnClientCookiesCached(iClient);
@@ -845,6 +849,7 @@ public void OnClientDisconnect(int iClient)
 	
 	Weapons_ClientDisconnect(iClient);
 	Infected_ResetJockey(iClient);
+	Infected_ResetSmoker(iClient);
 }
 
 public void OnEntityCreated(int iEntity, const char[] sClassname)
@@ -1159,7 +1164,7 @@ public void OnGameFrame()
 			int iClients[MAXPLAYERS];
 			int iZombieCount;
 			for (int iClient = 1; iClient <= MaxClients; iClient++)
-				if (IsValidZombie(iClient) && g_nInfected[iClient] == Infected_None && g_nNextInfected[iClient] == Infected_None)
+				if (IsValidZombie(iClient) && g_nInfected[iClient] == Infected_None && g_nNextInfected[iClient] == Infected_None && !g_bSpawnAsSpecialInfected[iClient])
 					iClients[iZombieCount++] = iClient;
 			
 			if (iZombieCount > 0)
@@ -1481,6 +1486,9 @@ void SZFDisable()
 	
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
+		if (IsClientInGame(iClient))
+			Stun_EndPlayer(iClient);
+		
 		ResetClientState(iClient);
 		DHook_UnhookGiveNamedItem(iClient);
 		
@@ -1519,6 +1527,7 @@ void ResetClientState(int iClient)
 	g_iRageTimer[iClient] = 0;
 	
 	Infected_ResetJockey(iClient);
+	Infected_ResetSmoker(iClient);
 }
 
 void PrintInfoChat(int iClient)
@@ -1582,11 +1591,12 @@ void CheckZombieBypass(int iClient)
 		GetCurrentMapDisplayName(g_sForceZombieStartMapName[iClient], sizeof(g_sForceZombieStartMapName[]));
 		
 		char sAuthId[64];
-		GetClientAuthId(iClient, AuthId_Steam2, sAuthId, sizeof(sAuthId));
-		
-		ArrayStack aStack = new ArrayStack(64);
-		aStack.PushString(sAuthId);
-		RequestFrame(Frame_SetForceZombieStart, aStack);
+		if (!IsFakeClient(iClient) && GetClientAuthId(iClient, AuthId_Steam2, sAuthId, sizeof(sAuthId)))
+		{
+			ArrayStack aStack = new ArrayStack(64);
+			aStack.PushString(sAuthId);
+			RequestFrame(Frame_SetForceZombieStart, aStack);
+		}
 	}
 }
 
@@ -1609,16 +1619,19 @@ void Frame_SetForceZombieStart(ArrayStack aStack)
 	g_cForceZombieStartMapName.SetByAuthId(sAuthId, sBuffer);
 }
 
+void GetRoundPlayedAsZombieKey(int iClient, char[] sKey, int iLength)
+{
+	if (IsFakeClient(iClient) || !GetClientAuthId(iClient, AuthId_SteamID64, sKey, iLength, false))
+		IntToString(GetClientUserId(iClient), sKey, iLength);
+}
+
 int GetRoundPlayedAsZombie(int iClient)
 {
 	if (!g_mRoundPlayedAsZombie)
 		return 0;
 	
 	char sSteamId[64];
-	if (IsFakeClient(iClient))
-		IntToString(GetClientUserId(iClient), sSteamId, sizeof(sSteamId));
-	else
-		GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, sizeof(sSteamId));
+	GetRoundPlayedAsZombieKey(iClient, sSteamId, sizeof(sSteamId));
 	
 	int iValue;
 	g_mRoundPlayedAsZombie.GetValue(sSteamId, iValue);
@@ -1631,10 +1644,7 @@ void SetClientStartedAsZombie(int iClient)
 		g_mRoundPlayedAsZombie = new StringMap();
 	
 	char sSteamId[64];
-	if (IsFakeClient(iClient))
-		IntToString(GetClientUserId(iClient), sSteamId, sizeof(sSteamId));
-	else
-		GetClientAuthId(iClient, AuthId_SteamID64, sSteamId, sizeof(sSteamId));
+	GetRoundPlayedAsZombieKey(iClient, sSteamId, sizeof(sSteamId));
 	
 	g_mRoundPlayedAsZombie.SetValue(sSteamId, g_iRoundPlayedCount);
 }
@@ -1805,7 +1815,7 @@ public Action Timer_RespawnPlayer(Handle hTimer, int iClient)
 
 void CheckLastSurvivor(int iIgnoredClient = 0)
 {
-	if (g_bLastSurvivor)
+	if (g_bLastSurvivor || g_nRoundState == SZFRoundState_Setup || g_nRoundState == SZFRoundState_End)
 		return;
 	
 	int iLastSurvivor;
