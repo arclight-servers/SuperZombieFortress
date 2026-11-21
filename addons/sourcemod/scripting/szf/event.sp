@@ -509,7 +509,7 @@ public Action Event_CPCapture(Event event, const char[] name, bool dontBroadcast
 	
 	g_iControlPointsInfo[iCaptureIndex] = CPState_Capped;
 	
-	for (int iClient = 0; iClient < MaxClients; iClient++)
+	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
 		if (g_iCapturingPoint[iClient] == iCaptureIndex)
 			g_iCapturingPoint[iClient] = -1;

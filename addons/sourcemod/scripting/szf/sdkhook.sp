@@ -333,6 +333,10 @@ public Action Pickup_SandvichTouch(int iEntity, int iToucher)
 	{
 		//Kill it and deal damage
 		RemoveEntity(iEntity);
+		
+		if (!IsValidClient(iOwner))
+			return Plugin_Handled;
+		
 		DealDamage(iOwner, iToucher, 55.0);
 		
 		g_bLunchboxTouched[iToucher] = true;
@@ -374,6 +378,10 @@ public Action Pickup_BananaTouch(int iEntity, int iToucher)
 		
 		//Kill it and deal damage
 		RemoveEntity(iEntity);
+		
+		if (!IsValidClient(iOwner))
+			return Plugin_Handled;
+		
 		DealDamage(iOwner, iToucher, 30.0);
 		
 		g_bLunchboxTouched[iToucher] = true;
@@ -410,7 +418,7 @@ public Action GasManager_Touch(int iGasManager, int iClient)
 			//Deal bleed instead of gas
 			int iOwner = GetEntPropEnt(iGasManager, Prop_Send, "m_hOwnerEntity");
 			
-			if (GetClientTeam(iClient) != GetClientTeam(iOwner))
+			if (IsValidClient(iOwner) && GetClientTeam(iClient) != GetClientTeam(iOwner))
 				TF2_MakeBleed(iClient, iOwner, 0.5);
 		}
 		
@@ -427,7 +435,7 @@ public Action GasManager_EndTouch(int iGasManager, int iClient)
 		//Add 5 extra secs of bleed after leaving
 		int iOwner = GetEntPropEnt(iGasManager, Prop_Send, "m_hOwnerEntity");
 		
-		if (GetClientTeam(iClient) != GetClientTeam(iOwner))
+		if (IsValidClient(iOwner) && GetClientTeam(iClient) != GetClientTeam(iOwner))
 		{
 			TF2_RemoveCondition(iClient, TFCond_Bleeding);
 			TF2_MakeBleed(iClient, iOwner, 5.0);
