@@ -147,7 +147,6 @@ int GetModelIndex(const char[] sModel)
 stock void AddModelToDownloadsTable(const char[] sModel)
 {
 	static const char sFileType[][] = {
-		"dx80.vtx",
 		"dx90.vtx",
 		"mdl",
 		"phy",
