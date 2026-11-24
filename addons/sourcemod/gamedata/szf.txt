@@ -34,7 +34,7 @@
 				"linux"		"@_ZNK9CTFPlayer30TeamFortress_CalculateMaxSpeedEb"
 				"linux64"	"@_ZNK9CTFPlayer30TeamFortress_CalculateMaxSpeedEb"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x18\x56\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A"
-				"windows64"	"\x88\x54\x24\x10\x53"
+				"windows64"	"\x40\x53\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00"
 			}
 			"CTFPlayer::TeamFortress_SetSpeed"
 			{
@@ -42,7 +42,7 @@
 				"linux"		"@_ZN9CTFPlayer21TeamFortress_SetSpeedEv"
 				"linux64"	"@_ZN9CTFPlayer21TeamFortress_SetSpeedEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\xA1\x2A\x2A\x2A\x2A\x56\x8B\xF1\x89\x75\xF0"
-				"windows64"	"\x40\x55\x48\x83\xEC\x70\x48\x8B\x05\x4B\xC4\x7A\x00"
+				"windows64"	"\x40\x55\x48\x83\xEC\x70\x48\x8B\x05"
 			}
 			"CTFWeaponBaseMelee::DoSwingTraceInternal"
 			{
@@ -57,31 +57,31 @@
 		{
 			"CTeamplayRules::GetCaptureValueForPlayer"
 			{
-				"linux"		"159"
-				"linux64"	"159"
-				"windows"	"158"
-				"windows64"	"158"
-			}
-			"CTeamplayRules::TeamMayCapturePoint"
-			{
 				"linux"		"160"
 				"linux64"	"160"
 				"windows"	"159"
 				"windows64"	"159"
 			}
+			"CTeamplayRules::TeamMayCapturePoint"
+			{
+				"linux"		"161"
+				"linux64"	"161"
+				"windows"	"160"
+				"windows64"	"160"
+			}
 			"CTeamplayRules::SetWinningTeam"
 			{
-				"linux"		"166"
-				"linux64"	"166"
-				"windows"	"165"
-				"windows64"	"165"
+				"linux"		"167"
+				"linux64"	"167"
+				"windows"	"166"
+				"windows64"	"166"
 			}
 			"CTeamplayRoundBasedRules::RoundRespawn"
 			{
-				"linux"		"232"
-				"linux64"	"232"
-				"windows"	"230"
-				"windows64"	"230"
+				"linux"		"233"
+				"linux64"	"233"
+				"windows"	"231"
+				"windows64"	"231"
 			}
 			"CBaseEntity::GetVelocity"
 			{
