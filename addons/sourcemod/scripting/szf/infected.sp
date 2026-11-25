@@ -1416,8 +1416,7 @@ public void Infected_OnJockeyThink(int iClient, int &iButtons)
 			//Jockey target no longer valid
 			g_iJockeyTarget[iClient] = 0;
 			
-			SetEntityMoveType(iClient, MOVETYPE_WALK);
-			SetEntityCollisionGroup(iClient, COLLISION_GROUP_PLAYER);
+			Infected_EndJockeyRide(iClient);
 		}
 	}
 }
@@ -1441,8 +1440,28 @@ public void Infected_OnJockeyTouch(int iClient, int iToucher)
 	Shake(iToucher, 3.0, 3.0);
 	
 	SetEntityMoveType(iClient, MOVETYPE_NONE);
-	SetEntityCollisionGroup(iClient, COLLISION_GROUP_DEBRIS_TRIGGER);
+	
+	SetEntityCollisionGroup(iClient, COLLISION_GROUP_PUSHAWAY);
+	Infected_SetJockeyScale(iClient, g_cvJockeyRideScale.FloatValue);
 	SDKCall_PlaySpecificSequence(iClient, "jockey_ride");
+}
+
+static void Infected_EndJockeyRide(int iClient)
+{
+	Infected_SetJockeyScale(iClient, 1.0);
+	SetEntityMoveType(iClient, MOVETYPE_WALK);
+	SetEntityCollisionGroup(iClient, COLLISION_GROUP_PLAYER);
+}
+
+static void Infected_SetJockeyScale(int iClient, float flScale)
+{
+	if (GetEntPropFloat(iClient, Prop_Send, "m_flModelScale") == flScale)
+		return;
+	
+	float vecScale[3];
+	vecScale[0] = flScale;
+	SetVariantVector3D(vecScale);
+	AcceptEntityInput(iClient, "SetModelScale");
 }
 
 public void Infected_OnJockeyDeath(int iClient, int iKiller, int iAssist)
@@ -1461,8 +1480,5 @@ void Infected_ResetJockey(int iClient)
 		return;
 	
 	if (IsClientInGame(iClient))
-	{
-		SetEntityMoveType(iClient, MOVETYPE_WALK);
-		SetEntityCollisionGroup(iClient, COLLISION_GROUP_PLAYER);
-	}
+		Infected_EndJockeyRide(iClient);
 }

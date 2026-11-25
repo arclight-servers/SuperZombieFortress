@@ -32,6 +32,7 @@ void ConVar_Init()
 	g_cvSpecialInfectedInterval = CreateConVar("sm_szf_special_infected_interval", "40.0", "Seconds interval to select a random infected to be special infected. -1 to disable it.", _, true, -1.0);
 	g_cvJockeyMovementVictim = CreateConVar("sm_szf_jockey_movement_victim", "0.25", "Percentage of movement speed applied to victim from jockey grab.", _, true, 0.0);
 	g_cvJockeyMovementAttacker = CreateConVar("sm_szf_jockey_movement_attacker", "0.75", "Percentage of movement speed applied to jockey during grab.", _, true, 0.0);
+	g_cvJockeyRideScale = CreateConVar("sm_szf_jockey_ride_scale", "1.25", "Model and hitbox scale of a jockey while it rides a survivor, so it's easier to hit up there. 1 = normal size.", _, true, 0.5, true, 2.0);
 	g_cvFrenzyTankChance = CreateConVar("sm_szf_frenzy_tank", "0.0", "% Chance of a Tank appearing instead of a frenzy.", _, true, 0.0, true, 1.0);
 	g_cvFrenzyRespawnStress = CreateConVar("sm_szf_frenzy_respawn_stress", "30.0", "Amount of seconds divided by playercount to add in frenzy respawn stress", _, true, 0.0, true, 120.0);
 	g_cvStunImmunity = CreateConVar("sm_szf_stun_immunity", "0.0", "How long until the survivor can be stunned again.", _, true, 0.0);

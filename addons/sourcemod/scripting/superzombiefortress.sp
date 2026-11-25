@@ -426,6 +426,7 @@ ConVar g_cvTankDebrisLifetime;
 ConVar g_cvSpecialInfectedInterval;
 ConVar g_cvJockeyMovementVictim;
 ConVar g_cvJockeyMovementAttacker;
+ConVar g_cvJockeyRideScale;
 ConVar g_cvFrenzyTankChance;
 ConVar g_cvFrenzyRespawnStress;
 ConVar g_cvStunImmunity;
